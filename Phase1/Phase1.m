@@ -1,5 +1,7 @@
+% CI Project Phase 1
 
-inputAudioName = '1980s-Casio-Trumpet-C5';
+% Set the variable inputAudioName as the name of the audio file
+inputAudioName = 'enterName';
 samplingRate = 16000;
 
 task3(inputAudioName, samplingRate);
@@ -35,7 +37,7 @@ function task3(fileName, fsNew)
     sound(yMono, fs);
 
     % 3.4. Write the sound to a new file.
-    monoAudio = strcat(fileName, 'mono', '.wav');
+    monoAudio = strcat(fileName, '_mono', '.wav');
     audiowrite(monoAudio,yMono,fs);
 
     % variable of all plots
@@ -60,7 +62,7 @@ function task3(fileName, fsNew)
 %     xlabel('Number of Audio Samples');
 %     ylabel('Amplitude');
     
-    % 3.7 (struggle)
+    % 3.7
     % subplot: row col plot #
     subplot(212)
     dt = 1/fsNew; % pass in new FS
