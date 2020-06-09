@@ -1,7 +1,7 @@
 % CI Project Phase 1
 
 % Set the variable inputAudioName as the name of the audio file
-inputAudioName = 'enterName';
+inputAudioName = 'ENV_rain_HeRanHalfwayToTheHardwareStore_8db';
 samplingRate = 16000;
 
 task3(inputAudioName, samplingRate);
@@ -19,15 +19,15 @@ function task3(fileName, fsNew)
     % n = number of audio channels
 
     if n == 2
-        % add the two columns to make it single channel (or a 1-column array).
-        y = origData(:, 1) + origData(:, 2); %sum(y, 2) also accomplishes this
+        % sum 2 columns (stereo) to make it 1 channel (mono).
+        y = origData(:, 1) + origData(:, 2); %sum(y, 2)
         peakAmp = max(abs(y)); 
         y = y/peakAmp;
         %  check the L/R channels for orig. peak Amplitudes
         peakL = max(abs(origData(:, 1)));
         peakR = max(abs(origData(:, 2))); 
         maxPeak = max([peakL peakR]);
-        %apply x's original peak amplitude to the normalized mono mixdown 
+        %apply original peak amplitude to the normalized mono mixdown 
         yMono = y*maxPeak;
     else
         yMono = origData; 
@@ -46,29 +46,36 @@ function task3(fileName, fsNew)
     % 3.5. Plot  sound waveform as a func of the sample number
     subplot(211);
     plot(yMono);
-    title('Original Audio');
+    title(fileName, 'Interpreter', 'none'); % remove _ to prevent subscript in title before plotting
     xlabel('Number of Audio Samples');
     ylabel('Amplitude');    
     disp(fs);
 
     % 3.6 Downsample to 16kHz
-    resampledAudio = resample(yMono, 16000, fs);
+    resampledAudio = resample(yMono, fsNew, fs);
     % resampledAudio is an array of downsampled data
     
-    % 3.5 (redo) after resampling
+    % 3.5 (redo) after resampling, not necessary
 %     subplot(312);
 %     plot(resampledAudio);
 %     title('Resampled Audio');
 %     xlabel('Number of Audio Samples');
 %     ylabel('Amplitude');
     
-    % 3.7
+    % 3.7 plot
     % subplot: row col plot #
     subplot(212)
     dt = 1/fsNew; % pass in new FS
     F = 1000;
     T = 1/F;
-    duration = m/fs; % legnth of original audio (sec)
+    duration = m/fs; % length of original audio (sec)
+    
+%    Check audio duration of resample is the same as original audio
+%    [mNew, nNew] = size(resampledAudio);
+%    duration2 = mNew/fsNew;
+%    display(duration);
+%    display(duration2);
+    
     t = (0:dt:duration); 
     sig = cos(2*pi*F*t);
     plot(t, sig);
@@ -77,6 +84,10 @@ function task3(fileName, fsNew)
     xlabel('Time (seconds)');
     ylabel('Amplitude')
     grid; grid minor;
+    
+    % 3.7 sound
+    pause(duration);
+    sound(sig, fsNew);
     
     % save figure as .png + .fig
     saveas(f1,strcat(fileName, '.png'));
