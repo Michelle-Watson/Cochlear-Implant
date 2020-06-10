@@ -1,7 +1,7 @@
 % CI Project Phase 1
 
 % Set the variable inputAudioName as the name of the audio file
-inputAudioName = 'CHARACTERISTICS_hearingTest.online.warble_500_60';
+inputAudioName = 'ENV_rain_HeRanHalfwayToTheHardwareStore_8db';
 samplingRate = 16000;
 
 task3(inputAudioName, samplingRate);
