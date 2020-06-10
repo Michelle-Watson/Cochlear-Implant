@@ -14,8 +14,8 @@ function task3(fileName, fsNew)
     % fs   = sampling rate
     
     % 3.2 stereo -> mono
-    [m, n] = size(origData);
-    % m = number of audio samples read
+    [~, n] = size(origData);
+    % ~ = number of audio samples read
     % n = number of audio channels
 
     if n == 2
@@ -46,7 +46,7 @@ function task3(fileName, fsNew)
     % 3.5. Plot  sound waveform as a func of the sample number
     subplot(211);
     plot(yMono);
-    title(fileName, 'Interpreter', 'none'); % remove _ to prevent subscript in title before plotting
+    title(fileName, 'Interpreter', 'none');
     xlabel('Number of Audio Samples');
     ylabel('Amplitude');
 
@@ -67,14 +67,8 @@ function task3(fileName, fsNew)
     dt = 1/fsNew; % pass in new FS
     F = 1000;
     T = 1/F;
-    duration = m/fs; % length of original audio (sec)
-    
-%    Check audio duration of resample is the same as original audio
-%    [mNew, nNew] = size(resampledAudio);
-%    duration2 = mNew/fsNew;
-%    display(duration);
-%    display(duration2);
-    
+    [samplesRead, ~] = size(resampledAudio);
+    duration = samplesRead/fsNew; % length of resampled audio (sec) = samplesRead/samplingRate
     t = (0:dt:duration); 
     sig = cos(2*pi*F*t);
     plot(t, sig);
