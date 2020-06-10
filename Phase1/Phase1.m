@@ -48,8 +48,7 @@ function task3(fileName, fsNew)
     plot(yMono);
     title(fileName, 'Interpreter', 'none'); % remove _ to prevent subscript in title before plotting
     xlabel('Number of Audio Samples');
-    ylabel('Amplitude');    
-    disp(fs);
+    ylabel('Amplitude');
 
     % 3.6 Downsample to 16kHz
     resampledAudio = resample(yMono, fsNew, fs);
