@@ -172,12 +172,12 @@ function cosines = genCosines(env_channels, samplingRate)
     t = (0:dt:duration); 
     
     % Centre Frequencies
-    fc(1) = sqrt(125*250);
-    fc(2) = sqrt(250*500);
-    fc(3) = sqrt(500*1000);
-    fc(4) = sqrt(1000*2000);
-    fc(5) = sqrt(2000*4000);
-    fc(6) = sqrt(4000*8000);
+    fc(1) = (125+250)/2
+    fc(2) = (250+500)/2;
+    fc(3) = (500+1000)/2;
+    fc(4) = (1000+2000)/2;
+    fc(5) = (2000+4000)/2;
+    fc(6) = (4000+8000)/2;
 
     %Plot Cosines to Check
     figure;
