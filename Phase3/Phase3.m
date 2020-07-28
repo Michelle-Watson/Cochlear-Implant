@@ -15,16 +15,24 @@ env_channels = {1,2,3,4,5,6}
 % (Phase I) Input audio file, convert to mono, downsample to 16kHz
 resampledAudio = preprocess(inputAudioName, samplingRate);
 
+% ITERATION: *** CHANGE PARAMETERS FOR TESTING HERE ***
+% (Phase III) Iteration: set desired parameters (eg. octave vs. linear subband)
+% Note: For version 1, set "OCTAVE" and 400
+subBandType = "OCTAVE";
+lpf_freq = 400;
+outputFileName = "OCTAVE";
+
 % (Phase II) Create bank of bandpass filters
-filters = makeBandPassBank;
+[lowerfreqs, upperfreqs] = setCutoffs(subBandType, 6);
+filters = makeBandPassBank(lowerfreqs, upperfreqs);
 % Create lowpass filter for envelope extraction
-lpfilter = makeLPF;
+lpfilter = makeLPF(lpf_freq);
 % Split audio file into channels, perform envelope extraction
 [channels, rect_channels, env_channels] = makeChannels(resampledAudio, filters, samplingRate, lpfilter);
 
 % (Phase III) Synthesize audio output
 cosines = genCosines(env_channels,samplingRate)
-sound_output = generateSound(env_channels, cosines)
+sound_output = generateSound(env_channels, cosines, outputFileName)
 plot(sound_output)
 title('Synthesized Output')
 
@@ -77,21 +85,21 @@ function resampledAudio = preprocess(fileName, fsNew)
 end
 
 % Task 4: (Phase II) Bank of Bandpass Filters
-function filters = makeBandPassBank
+function filters = makeBandPassBank(lowerfreqs, upperfreqs)
     % Sampling Rate of Signal
     Fs = 16000;
     % Filter Orders, N1(Ch1-4), N2(Ch5-6)
     N1 = 6; 
     N2 = 10;
-    
-    % Construct FDESIGN objects to store filter parameters
-    % Lower bounds of each channel are 1 octave apart (frequency x 2) 
-    h(1) = fdesign.bandpass('N,F3dB1,F3dB2', N1, 125, 250, Fs);
-    h(2) = fdesign.bandpass('N,F3dB1,F3dB2', N1, 250, 500, Fs);
-    h(3) = fdesign.bandpass('N,F3dB1,F3dB2', N1, 500, 1000, Fs);
-    h(4) = fdesign.bandpass('N,F3dB1,F3dB2', N1, 1000, 2000, Fs);
-    h(5) = fdesign.bandpass('N,Fp1,Fp2,Ap', N2, 2000, 4000, 1, Fs);
-    h(6) = fdesign.bandpass('N,Fp1,Fp2,Ap', N2, 4000, 8000, 1, Fs);
+   
+    % Construct FDESIGN objects to store filter parameters. 
+    % Uses vectors containing the desired frequency bounds
+    % Note Ch5 and Ch6 parameters are different because they are chebyshev filters
+    for i=1:4
+        h(i) = fdesign.bandpass('N,F3dB1,F3dB2', N1, lowerfreqs(i), upperfreqs(i), Fs);
+    end
+    h(5) = fdesign.bandpass('N,Fp1,Fp2,Ap', N2, lowerfreqs(5), upperfreqs(5), 1, Fs);
+    h(6) = fdesign.bandpass('N,Fp1,Fp2,Ap', N2, lowerfreqs(6), upperfreqs(6), 1, Fs);
     
     % Ch1-4 Generate Butterworth Filters
     for i=1:4
@@ -124,7 +132,7 @@ function [channels, rect_channels, env_channels] = makeChannels(resampledAudio, 
 end
 
 % Tasks 10-12: (Phase III) Amplitude Modulation, Sum to create output sound
-function sound_output = generateSound(env_channels, cosines)
+function sound_output = generateSound(env_channels, cosines, outputFileName)
     modAmp_channels = {1,2,3,4,5,6};
     
     % Amplitude Modulation
@@ -138,16 +146,16 @@ function sound_output = generateSound(env_channels, cosines)
     end
 
     % Plot Amplitude Modulation to Check
-    for i=1:6
-        figure;
-        subplot(2,1,1);
-        plot(env_channels{1,i});
-        title('Envelope');
-
-        subplot(2,1,2);
-        plot(modAmp_channels{1,i});
-        title('Amplitude Modulated Signal');
-    end
+%     for i=1:6
+%         figure;
+%         subplot(2,1,1);
+%         plot(env_channels{1,i});
+%         title('Envelope');
+% 
+%         subplot(2,1,2);
+%         plot(modAmp_channels{1,i});
+%         title('Amplitude Modulated Signal');
+%     end
     
     sound_output = modAmp_channels{1,i};
     for i=2:6
@@ -159,8 +167,38 @@ function sound_output = generateSound(env_channels, cosines)
     plot(sound_output);
     title('Sound Output');
     sound(sound_output,16000);
-    audiowrite('soundOutput.wav',sound_output,16000);
-    %audioWrite('SOUND.wav',sound_output,16000);
+    outputFileName = strcat(outputFileName, '.wav')
+    audiowrite(outputFileName,sound_output,16000);
+end
+
+% Helper Function: Set cutoff bounds for filter bands
+function [lowerfreqs, upperfreqs] = setCutoffs(type, numChannels)
+    % Default, first lower bound is 100 + last upper bound is 8000
+    lowerfreqs(1) = 100;
+    upperfreqs(numChannels) = 8000;
+    
+    % Option 1: Octave Spacing
+    if isequal(type, 'OCTAVE')
+       lowerfreqs(1) = 100;  upperfreqs(1) = 250;
+       lowerfreqs(2) = 250;  upperfreqs(2) = 500;
+       lowerfreqs(3) = 500;  upperfreqs(3) = 1000;
+       lowerfreqs(4) = 1000; upperfreqs(4) = 2000;
+       lowerfreqs(5) = 2000; upperfreqs(5) = 4000;
+       lowerfreqs(6) = 4000; upperfreqs(6) = 8000;
+    end 
+    
+    % Option 2: Even linear spacing
+    if isequal(type, 'LINEAR')
+        spacing = (8000-100)/numChannels;
+        for i=2:6
+            lowerfreqs(i) = lowerfreqs(i-1) + spacing;
+        end 
+        for i=1:6
+            upperfreqs(i) = 100 + (i*spacing);
+        end
+    end
+    
+    % Option 3: Overlapping bands
 end
 
 % Helper Function: Make Cosines
@@ -193,11 +231,11 @@ function cosines = genCosines(env_channels, samplingRate)
 end
 
 % Helper Function: LPF for Envelope Extraction
-function lpfilter = makeLPF
+function lpfilter = makeLPF(lpf_freq)
     Fs = 16000;
     Nb   = 8;    % Numerator Order
     Na   = 8;    % Denominator Order
-    F3dB = 400;  % 3-dB Frequency
+    F3dB = lpf_freq;  % 3-dB Frequency
 
     h_lpf = fdesign.lowpass('Nb,Na,F3dB', Nb, Na, F3dB, Fs);
     lpfilter = design(h_lpf, 'butter');
