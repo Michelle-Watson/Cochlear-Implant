@@ -21,10 +21,9 @@ resampledAudio = preprocess(inputAudioName, samplingRate);
 % ITERATION: *** CHANGE PARAMETERS FOR TESTING HERE ***
 % (Phase III) Iteration: set desired parameters (eg. octave vs. linear subband)
 % Note: For version 1, set "OCTAVE" and 400
-subBandType = "LOGARITHMIC";
+subBandType = "OCTAVE";
 lpf_freq =400;
-outputFileName = strcat('B_', inputAudioName
-,'.wav');
+outputFileName = strcat('A_', inputAudioName,'.wav');
 
 % (Phase II) Create bank of bandpass filters
 [lowerfreqs, upperfreqs] = setCutoffs(subBandType, 6);
@@ -99,7 +98,7 @@ function filters = makeBandPassBank(lowerfreqs, upperfreqs)
     % Sampling Rate of Signal
     Fs = 16000;
     % Filter Orders, N1(Ch1-4), N2(Ch5-6)
-    N1 = 10; 
+    N1 = 6; 
     N2 = 10;
    
     % Construct FDESIGN objects to store filter parameters. 

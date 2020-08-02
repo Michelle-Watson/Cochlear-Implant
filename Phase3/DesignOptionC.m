@@ -20,11 +20,10 @@ resampledAudio = preprocess(inputAudioName, samplingRate);
 
 % ITERATION: *** CHANGE PARAMETERS FOR TESTING HERE ***
 % (Phase III) Iteration: set desired parameters (eg. octave vs. linear subband)
-% Note: For version 1, set "OCTAVE" and 400
+% Note: For version C "Logarithmic" and 400
 subBandType = "LOGARITHMIC";
 lpf_freq =400;
-outputFileName = strcat('B_', inputAudioName
-,'.wav');
+outputFileName = strcat('C_', inputAudioName,'.wav');
 
 % (Phase II) Create bank of bandpass filters
 [lowerfreqs, upperfreqs] = setCutoffs(subBandType, 6);
@@ -99,26 +98,21 @@ function filters = makeBandPassBank(lowerfreqs, upperfreqs)
     % Sampling Rate of Signal
     Fs = 16000;
     % Filter Orders, N1(Ch1-4), N2(Ch5-6)
-    N1 = 10; 
+    N1 = 10;
     N2 = 10;
+    Astop=60;
+    Apass  = 1;
    
-    % Construct FDESIGN objects to store filter parameters. 
+    % Construct FDESIGN objects to store filter parameters.
     % Uses vectors containing the desired frequency bounds
-    % Note Ch5 and Ch6 parameters are different because they are chebyshev filters
-    for i=1:4
-        h(i) = fdesign.bandpass('N,F3dB1,F3dB2', N1, lowerfreqs(i), upperfreqs(i), Fs);
+    for i=1:6
+        h(i) = fdesign.bandpass('N,Fp1,Fp2,Ast1,Ap,Ast2', N1, lowerfreqs(i), upperfreqs(i), Astop, Apass, Astop, Fs);
     end
-    h(5) = fdesign.bandpass('N,Fp1,Fp2,Ap', N2, lowerfreqs(5), upperfreqs(5), 1, Fs);
-    h(6) = fdesign.bandpass('N,Fp1,Fp2,Ap', N2, lowerfreqs(6), upperfreqs(6), 1, Fs);
-    
-    % Ch1-4 Generate Butterworth Filters
-    for i=1:4
-        filters(i) = design(h(i), 'butter');
+   
+    % Ch1-6 Elliptic Filters
+    for i=1:6
+        filters(i) = design(h(i), 'ellip');
     end
-    
-    % Ch5-6 Generate Chebyshev Filters
-    filters(5) = design(h(5), 'cheby1');
-    filters(6) = design(h(6), 'cheby1');
 end
 
 % Tasks 5-9: (Phase II) Filter into N=6 channels, Envelope Extraction
