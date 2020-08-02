@@ -7,9 +7,12 @@ inputAudioName = 'HeRanHalfwayToTheHardwareStore';
 samplingRate = 16000;
 
 % Create cell arrays, accessible from different contexts
-channels = {1,2,3,4,5,6}
-rect_channels = {1,2,3,4,5,6}
-env_channels = {1,2,3,4,5,6}
+channels = {1,2,3,4,5,6};
+rect_channels = {1,2,3,4,5,6};
+env_channels = {1,2,3,4,5,6};
+
+test = logspace(2,4,6);
+disp(test);
 
 % Main 
 % (Phase I) Input audio file, convert to mono, downsample to 16kHz
@@ -18,12 +21,17 @@ resampledAudio = preprocess(inputAudioName, samplingRate);
 % ITERATION: *** CHANGE PARAMETERS FOR TESTING HERE ***
 % (Phase III) Iteration: set desired parameters (eg. octave vs. linear subband)
 % Note: For version 1, set "OCTAVE" and 400
-subBandType = "OCTAVE";
-lpf_freq = 400;
-outputFileName = "OCTAVE";
+subBandType = "LOGARITHMIC";
+lpf_freq = 350;
+outputFileName = "LOGARITHMIC-BUTTER";
 
 % (Phase II) Create bank of bandpass filters
 [lowerfreqs, upperfreqs] = setCutoffs(subBandType, 6);
+disp("CHECK THE FREQUENCIES");
+disp(lowerfreqs);
+disp(upperfreqs);
+
+
 filters = makeBandPassBank(lowerfreqs, upperfreqs);
 % Create lowpass filter for envelope extraction
 lpfilter = makeLPF(lpf_freq);
@@ -31,10 +39,12 @@ lpfilter = makeLPF(lpf_freq);
 [channels, rect_channels, env_channels] = makeChannels(resampledAudio, filters, samplingRate, lpfilter);
 
 % (Phase III) Synthesize audio output
-cosines = genCosines(env_channels,samplingRate)
-sound_output = generateSound(env_channels, cosines, outputFileName)
-plot(sound_output)
-title('Synthesized Output')
+cosines = genCosines(env_channels,samplingRate);
+sound_output = generateSound(env_channels, cosines, outputFileName);
+plot(sound_output);
+title('Synthesized Output');
+
+checkFreqDomain(channels, samplingRate, lowerfreqs, upperfreqs);
 
 % Task 3: (Phase I)
 function resampledAudio = preprocess(fileName, fsNew)
@@ -122,7 +132,7 @@ function [channels, rect_channels, env_channels] = makeChannels(resampledAudio, 
        env_channels{1,i} = filter(lpfilter,rect_channels{1,i});
     end
     
-    % Plot channels (Time Domain) 
+    % Plot channel envelopes (Time Domain) 
     figure;
     for i=1:6
         subplot(6,1,i);
@@ -167,7 +177,7 @@ function sound_output = generateSound(env_channels, cosines, outputFileName)
     plot(sound_output);
     title('Sound Output');
     sound(sound_output,16000);
-    outputFileName = strcat(outputFileName, '.wav')
+    outputFileName = strcat(outputFileName, '.wav');
     audiowrite(outputFileName,sound_output,16000);
 end
 
@@ -184,21 +194,55 @@ function [lowerfreqs, upperfreqs] = setCutoffs(type, numChannels)
        lowerfreqs(3) = 500;  upperfreqs(3) = 1000;
        lowerfreqs(4) = 1000; upperfreqs(4) = 2000;
        lowerfreqs(5) = 2000; upperfreqs(5) = 4000;
-       lowerfreqs(6) = 4000; upperfreqs(6) = 8000;
+       lowerfreqs(6) = 4000; upperfreqs(6) = 7999;
     end 
     
     % Option 2: Even linear spacing
     if isequal(type, 'LINEAR')
-        spacing = (8000-100)/numChannels;
-        for i=2:6
-            lowerfreqs(i) = lowerfreqs(i-1) + spacing;
-        end 
-        for i=1:6
-            upperfreqs(i) = 100 + (i*spacing);
-        end
+       lowerfreqs(1) = 100;  upperfreqs(1) = 1500;
+       lowerfreqs(2) = 1500;  upperfreqs(2) = 2900;
+       lowerfreqs(3) = 2900;  upperfreqs(3) = 4300;
+       lowerfreqs(4) = 4300; upperfreqs(4) = 5700;
+       lowerfreqs(5) = 5700; upperfreqs(5) = 7100;
+       lowerfreqs(6) = 7100; upperfreqs(6) = 7999;
+%         spacing = (8000-100)/numChannels;
+%         for i=2:6
+%             lowerfreqs(i) = lowerfreqs(i-1) + spacing;
+%         end 
+%         for i=1:6
+%             upperfreqs(i) = 100 + (i*spacing);
+%         end
     end
     
-    % Option 3: Overlapping bands
+    % Option 3: Logarithmic Spacing of Corners
+    if isequal(type, 'LOGCENTRE') % 100, 251, 631, 1585, 3981, *8000
+       lowerfreqs(1) = 50;  upperfreqs(1) = 200; 
+       lowerfreqs(2) = 200;  upperfreqs(2) = 315;
+       lowerfreqs(3) = 315;  upperfreqs(3) = 1260;
+       lowerfreqs(4) = 1260; upperfreqs(4) = 2000;
+       lowerfreqs(5) = 2000; upperfreqs(5) = 7924;
+       lowerfreqs(6) = 7924; upperfreqs(6) = 7999;
+    end  
+    
+    % Option 4: Logarithmic Spacing of Corners
+    if isequal(type, 'LOGARITHMIC')
+       lowerfreqs(1) = 100;  upperfreqs(1) = 200;
+       lowerfreqs(2) = 200;  upperfreqs(2) = 450;
+       lowerfreqs(3) = 450;  upperfreqs(3) = 1000;
+       lowerfreqs(4) = 1000; upperfreqs(4) = 2150;
+       lowerfreqs(5) = 2150; upperfreqs(5) = 4650;
+       lowerfreqs(6) = 4650; upperfreqs(6) = 7999;
+    end  
+    
+    % Option 5: Overlapping bands
+    if isequal(type, 'OVERLAP')
+       lowerfreqs(1) = 100;  upperfreqs(1) = 400;
+       lowerfreqs(2) = 350;  upperfreqs(2) = 600;
+       lowerfreqs(3) = 500;  upperfreqs(3) = 1000;
+       lowerfreqs(4) = 250; upperfreqs(4) = 6500;
+       lowerfreqs(5) = 4000; upperfreqs(5) = 6000;
+       lowerfreqs(6) = 4000; upperfreqs(6) = 7999;
+    end  
 end
 
 % Helper Function: Make Cosines
@@ -225,7 +269,7 @@ function cosines = genCosines(env_channels, samplingRate)
        plot(t, cosines{1,i})
        T = 1/200; % arbritrary period to display for
        %T = 1/fc(i);     % length of one period
-       xlim([0 2*T]); % display 2 cycles, or 2 periods
+       xlim([0 2*T]); % play 2 cycles, or 2 periods
        title(['2 cycles of cos Waveform' num2str(i)]);
     end
 end
@@ -245,7 +289,7 @@ end
 function plotFFT(tdSignal,samplingRate)
     % Get signal duration 
     [samplesRead, ~] = size(tdSignal);
-    disp(samplesRead)
+    %disp(samplesRead)
     L = samplesRead;
     
     % FFT two sided spectrum
@@ -261,3 +305,14 @@ function plotFFT(tdSignal,samplingRate)
     xlabel('f (Hz)')
     ylabel('|P1(f)|')
 end
+
+function checkFreqDomain(channels, samplingRate, lowerfreqs, upperfreqs)
+    figure;
+    for i=1:6
+        subplot(6,1,i);
+        plotFFT(channels{1,i}, samplingRate);
+        plotName = strcat('FFT', 'Ch', num2str(i), ' (', num2str(lowerfreqs(i)), '-', num2str(upperfreqs(i)), ')');
+        title(plotName);
+    end
+end
+
